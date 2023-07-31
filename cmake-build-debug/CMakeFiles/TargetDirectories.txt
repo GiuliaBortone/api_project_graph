@@ -1,0 +1,3 @@
+/Users/giulia/CLionProjects/api_project_graph/cmake-build-debug/CMakeFiles/api_project2_0.dir
+/Users/giulia/CLionProjects/api_project_graph/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/giulia/CLionProjects/api_project_graph/cmake-build-debug/CMakeFiles/rebuild_cache.dir

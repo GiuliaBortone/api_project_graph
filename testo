@@ -1,0 +1,11 @@
+// grafi con archi a peso uguale -> dijkstra; poi di tutti trovi quello accettabile
+// oppure BFS (visita in ampiezza)
+
+// BST?
+// RBT?
+// forse le stazioni per i veicoli fai direttamente vettore[512]
+// #include <stdint.h>   int32_t
+// per memorizzare numeri grandi basta int, se devo farci operazioni no
+
+// usare un max heap per le macchine nelle stazioni, così ho il massimo con vehicles->autonomy[0]
+
