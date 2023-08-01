@@ -62,6 +62,8 @@ void initializeHighway(Highway *highway) {
 void freeHighway(Highway *highway) {
     for (int i = 0; i < highway->num_stations; i++) {
         free(highway->stations[i].cars->autonomy);
+        free(highway->stations[i].cars);
+        free(highway->stations[i].connections);
     }
     free(highway->stations);
 }
