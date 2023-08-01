@@ -723,7 +723,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "api_project2_0"
+			"value" : "api_project_graph"
 		},
 		{
 			"name" : "CMAKE_RANLIB",
@@ -1031,6 +1031,42 @@
 		},
 		{
 			"name" : "api_project2_0_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/Users/giulia/CLionProjects/api_project_graph"
+		},
+		{
+			"name" : "api_project_graph_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/Users/giulia/CLionProjects/api_project_graph/cmake-build-debug"
+		},
+		{
+			"name" : "api_project_graph_IS_TOP_LEVEL",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "ON"
+		},
+		{
+			"name" : "api_project_graph_SOURCE_DIR",
 			"properties" : 
 			[
 				{

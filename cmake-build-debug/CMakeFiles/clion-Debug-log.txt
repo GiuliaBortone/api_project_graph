@@ -1,10 +1,4 @@
 "/Users/giulia/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/231.9225.21/CLion.app/Contents/bin/cmake/mac/bin/cmake" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=/Users/giulia/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/231.9225.21/CLion.app/Contents/bin/ninja/mac/ninja" -G Ninja -S /Users/giulia/CLionProjects/api_project_graph -B /Users/giulia/CLionProjects/api_project_graph/cmake-build-debug
--- The C compiler identification is AppleClang 11.0.3.11030032
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc - skipped
--- Detecting C compile features
--- Detecting C compile features - done
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /Users/giulia/CLionProjects/api_project_graph/cmake-build-debug

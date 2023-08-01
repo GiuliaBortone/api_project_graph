@@ -27,7 +27,7 @@
 					[
 						0
 					],
-					"name" : "api_project2_0",
+					"name" : "api_project_graph",
 					"targetIndexes" : 
 					[
 						0
@@ -38,9 +38,9 @@
 			[
 				{
 					"directoryIndex" : 0,
-					"id" : "api_project2_0::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-api_project2_0-Debug-8e8280bac2dd228076e1.json",
-					"name" : "api_project2_0",
+					"id" : "api_project_graph::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-api_project_graph-Debug-77d89a27a946a5ae60bd.json",
+					"name" : "api_project_graph",
 					"projectIndex" : 0
 				}
 			]

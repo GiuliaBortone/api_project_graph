@@ -128,7 +128,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=api_project2_0
+CMAKE_PROJECT_NAME:STATIC=api_project_graph
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/Library/Developer/CommandLineTools/usr/bin/ranlib
@@ -200,6 +200,15 @@ api_project2_0_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 api_project2_0_SOURCE_DIR:STATIC=/Users/giulia/CLionProjects/api_project_graph
+
+//Value Computed by CMake
+api_project_graph_BINARY_DIR:STATIC=/Users/giulia/CLionProjects/api_project_graph/cmake-build-debug
+
+//Value Computed by CMake
+api_project_graph_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+api_project_graph_SOURCE_DIR:STATIC=/Users/giulia/CLionProjects/api_project_graph
 
 
 ########################

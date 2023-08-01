@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "api_project2_0"
+			"path" : "api_project_graph"
 		}
 	],
 	"backtrace" : 1,
@@ -53,7 +53,7 @@
 			]
 		}
 	],
-	"id" : "api_project2_0::@6890427a1f51a3e7e1df",
+	"id" : "api_project_graph::@6890427a1f51a3e7e1df",
 	"link" : 
 	{
 		"commandFragments" : 
@@ -69,8 +69,8 @@
 		],
 		"language" : "C"
 	},
-	"name" : "api_project2_0",
-	"nameOnDisk" : "api_project2_0",
+	"name" : "api_project_graph",
+	"nameOnDisk" : "api_project_graph",
 	"paths" : 
 	{
 		"build" : ".",
