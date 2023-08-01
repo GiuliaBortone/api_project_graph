@@ -1,57 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
+//#include <stdbool.h>
 
 #define MAX_VEHICLES 512
-
-typedef struct {
-    int start;
-    int end;
-    int weight;
-} Connection; // Edge
 
 typedef struct { // the highest value is vehicles->autonomy[0]
     int *autonomy;
     int num_vehicles;
-    // int capacity = MAX_VEHICLES; quindi non lo scrivo
 } Vehicles;
 
 typedef struct {
     int distance;
     Vehicles *cars;
-    Connection *connections;
-    int num_connections;
 } Station; // Node
 
 typedef struct {
     Station *stations;
     int num_stations;
 } Highway; //Graph
-
-void addConnection(Station *station, int start, int end) {
-    if (station->num_connections == 0) {
-        station->connections = (Connection *) malloc(sizeof(Connection));
-    } else {
-        station->connections = (Connection *) realloc(station->connections,
-                                                      (station->num_connections + 1) * sizeof(Connection));
-    }
-
-    station->connections[station->num_connections].start = start;
-    station->connections[station->num_connections].end = end;
-    station->connections[station->num_connections].weight = 1;
-
-    station->num_connections++;
-}
-
-bool containsConnection(Station *station, int start, int end) {
-    for (int i = 0; i < station->num_connections; i++) {
-        if (station->connections[i].start == start && station->connections[i].end == end) {
-            return true;
-        }
-    }
-    return false;
-}
 
 // region initialization and deletion of graph
 void initializeHighway(Highway *highway) {
@@ -63,7 +30,6 @@ void freeHighway(Highway *highway) {
     for (int i = 0; i < highway->num_stations; i++) {
         free(highway->stations[i].cars->autonomy);
         free(highway->stations[i].cars);
-        free(highway->stations[i].connections);
     }
     free(highway->stations);
 }
@@ -147,28 +113,11 @@ void addVehicle(Highway *highway, int distance, int vehicle) {
     for (int i = 0; i < highway->num_stations; i++) {
         if (highway->stations[i].distance == distance) {
             int num_vehicles = highway->stations[i].cars->num_vehicles;
-            if (num_vehicles < MAX_VEHICLES) {
-                int old_max = highway->stations[i].cars->autonomy[0];
 
+            if (num_vehicles < MAX_VEHICLES) {
                 highway->stations[i].cars->autonomy[num_vehicles] = vehicle;
                 insertionHelper(highway->stations[i].cars, highway->stations[i].cars->num_vehicles);
                 highway->stations[i].cars->num_vehicles++;
-
-                // add connections if needed
-                if (vehicle > old_max) {
-                    for (int j = 0; j < highway->num_stations; j++) {
-                        if (j != i) {
-                            int current_distance = highway->stations[j].distance;
-
-                            if (((distance < current_distance && distance + vehicle >= current_distance)
-                                 || (distance > current_distance && distance - vehicle <= current_distance)) &&
-                                !containsConnection(&highway->stations[i], distance, current_distance)) {
-                                addConnection(&highway->stations[i], distance,
-                                              current_distance);
-                            }
-                        }
-                    }
-                }
 
                 printf("aggiunta\n");
                 return;
@@ -178,7 +127,7 @@ void addVehicle(Highway *highway, int distance, int vehicle) {
         }
     }
 
-    printf("non aggiunta\n"); // station non found
+    printf("non aggiunta\n"); // station not found
 }
 
 void removeVehicle(Highway *highway, int distance, int vehicle) {
@@ -193,37 +142,11 @@ void removeVehicle(Highway *highway, int distance, int vehicle) {
 
             for (int j = 0; j < num_vehicles; j++) {
                 if (highway->stations[i].cars->autonomy[j] == vehicle) {
-                    int old_max = highway->stations[i].cars->autonomy[0];
-
                     highway->stations[i].cars->autonomy[j] = highway->stations[i].cars->autonomy[num_vehicles - 1];
                     highway->stations[i].cars->num_vehicles--;
                     maxHeapify(highway->stations[i].cars, j);
                     printf("rottamata\n");
 
-                    // fix connections
-                    if (old_max == vehicle) {
-                        int new_max = highway->stations[i].cars->autonomy[0];
-
-                        for (int k = 0; k < highway->num_stations; k++) {
-                            if (k != i) {
-                                int current_distance = highway->stations[k].distance;
-
-                                if (!(distance < current_distance && distance + new_max >= current_distance)
-                                    && !(distance > current_distance && distance - new_max <= current_distance) &&
-                                    containsConnection(&highway->stations[i], distance, current_distance)) {
-                                    // remove connection
-                                    for (int t = j; t < highway->stations[i].num_connections - 1; t++) {
-                                        highway->stations[i].connections[t] = highway->stations[i].connections[t + 1];
-                                    }
-
-                                    highway->stations[i].num_connections--;
-                                    highway->stations[i].connections = (Connection *) realloc(
-                                            highway->stations[i].connections,
-                                            (highway->stations[i].num_connections) * sizeof(Connection));
-                                }
-                            }
-                        }
-                    }
                     return;
                 }
             }
@@ -248,31 +171,21 @@ void addStation(Highway *highway, int distance, int num_vehicles, int *cars) {
     // add the new station
     highway->num_stations++;
     highway->stations = (Station *) realloc(highway->stations, highway->num_stations * sizeof(Station));
-    highway->stations[highway->num_stations - 1].distance = distance;
-    highway->stations[highway->num_stations - 1].cars = createHeap(num_vehicles, cars);
-    highway->stations[highway->num_stations - 1].num_connections = 0;
-    highway->stations[highway->num_stations - 1].connections = NULL;
 
-    int max = highway->stations[highway->num_stations - 1].cars->autonomy[0];
-
-    // adding edges related to new station
-    for (int i = 0; i < highway->num_stations - 1; i++) {// - 1 because I don't want to check the station I just added
-        int current_distance = highway->stations[i].distance;
-        int current_max = highway->stations[i].cars->autonomy[0];
-
-        // adding edges starting from the new station
-        if ((distance < current_distance && distance + max >= current_distance)
-            || (distance > current_distance && distance - max <= current_distance)) {
-            addConnection(&highway->stations[highway->num_stations - 1], distance,
-                          current_distance);
-        }
-
-        // adding edges from old stations to the new station
-        if ((distance > current_distance && current_distance + current_max >= distance)
-            || (distance < current_distance && current_distance - current_max <= distance)) {
-            addConnection(&highway->stations[i], current_distance, distance);
-        }
+    // Find the correct position to insert the new station based on distance
+    int insert_index = 0;
+    while (insert_index < highway->num_stations - 1 && highway->stations[insert_index].distance < distance) {
+        insert_index++;
     }
+
+    // Move the existing stations to make room for the new one
+    for (int i = highway->num_stations - 1; i > insert_index; i--) {
+        highway->stations[i] = highway->stations[i - 1];
+    }
+
+    // Insert the new station at the correct position
+    highway->stations[insert_index].distance = distance;
+    highway->stations[insert_index].cars = createHeap(num_vehicles, cars);
 
     printf("aggiunta\n");
 }
@@ -280,9 +193,6 @@ void addStation(Highway *highway, int distance, int num_vehicles, int *cars) {
 void removeStation(Highway *highway, int distance) {
     for (int i = 0; i < highway->num_stations; i++) {
         if (highway->stations[i].distance == distance) {
-
-            free(highway->stations[i].connections);
-
             free(highway->stations[i].cars->autonomy);
 
             for (int j = i; j < highway->num_stations - 1; j++) {
@@ -310,19 +220,10 @@ void printHeap(Vehicles *v) {
     printf("\n");
 }
 
-void printfConnections(Station *station) {
-    for (int i = 0; i < station->num_connections; i++) {
-        printf("(%d, %d, %d)", station->connections[i].start, station->connections[i].end,
-               station->connections[i].weight);
-    }
-    printf("\n");
-}
-
 void printGraph(Highway *highway) {
     for (int i = 0; i < highway->num_stations; i++) {
         printf("Station: %d km, %d veicoli, veicoli: ", highway->stations[i].distance,
                highway->stations[i].cars->num_vehicles);
-        printfConnections(&highway->stations[i]);
         printHeap(highway->stations[i].cars);
     }
 }
@@ -372,7 +273,7 @@ int main() {
         }
     }
 
-    //printGraph(&highway);
+    printGraph(&highway);
 
     freeHighway(&highway);
 
