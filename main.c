@@ -286,14 +286,6 @@ bool isPresent(StationForPath *path, int dim, int distance) {
     return false;
 }
 
-bool alreadyAdded(int *path, int dim, int distance) {
-    for (int i = 0; i < dim; i++) {
-        if (path[i] == distance)
-            return true;
-    }
-    return false;
-}
-
 void findShortestPath(Highway *highway, int start, int target) {
     Station starting_station;
     starting_station.distance = 0;
@@ -479,54 +471,36 @@ void findShortestPathReverse(Highway *highway, int start, int target) {
     true_path[0] = path[0].distance;
     int true_dim = 1;
 
-    int end_reached = 0;
-    for (int i = 0; i < path_dim; i++) {
-        int j = i + 1;
-        while (path[i].distancePlusMax <= path[j].distance && j < path_dim) {
-            if (path[j].distance == target) {
-                true_path[true_dim] = target;
-                true_dim++;
-                end_reached = 1;
-                break;
-            }
+    int last_dim = 0;
+    int j = last_dim + 1;
+    while (j < path_dim) {
+        int got_into_while = 0;
+        while (path[last_dim].distancePlusMax <= path[j].distance && j < path_dim) {
+            got_into_while = 1;
             j++;
         }
 
-        if (end_reached == 1) {
+        if (j >= path_dim) {
+            true_path[true_dim] = path[path_dim - 1].distance;
+            true_dim++;
             break;
         }
 
-        int k = j - 1;
-        if (k == i) {
-            // I only have one possible path, keep going
-            true_path[true_dim] = path[k].distance;
-            true_dim++;
-            continue;
+        if (path[last_dim].distancePlusMax > path[j].distance) {
+            if (got_into_while == 1) {
+                // add the last >= (j + 1) to the true path
+                true_path[true_dim] = path[j - 1].distance;
+                true_dim++;
+                last_dim = j - 1;
+            } else
+                j++;
         }
-
-        while (path[k].distancePlusMax > path[j].distance && k > 0) {
-            k--;
-        }
-
-        if (path[k].distancePlusMax <= path[j].distance) {
-            true_path[true_dim] = path[k].distance;
-            true_dim++;
-        } else {
-            printf("nessun percorso\n"); // shouldn't be possible, it's a precaution
-            return;
-        }
-
-        // now I want to move i to the k position, however with the for loop i is going to increase by one, so now
-        // I'll set it to k - 1
-        i = k - 1;
     }
 
     for (int i = 0; i < true_dim - 1; i++) {
-        if (true_path[i]) {
-            printf("%d ", true_path[i]);
-        }
+        printf("%d ", true_path[i]);
     }
-    printf("%d\n", true_path[true_dim]);
+    printf("%d\n", true_path[true_dim - 1]);
 
     free(true_path);
     free(path);
