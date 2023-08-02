@@ -9,3 +9,149 @@
 
 // usare un max heap per le macchine nelle stazioni, così ho il massimo con vehicles->autonomy[0]
 
+int last_index = path_dim - 1;
+    for (int i = path_dim - 2; i > 0; i--) {
+        int temp_index = last_index;
+
+        if (path[i - 1].distancePlusMax <= path[last_index].distance) {
+            while (path[i - 1].distancePlusMax <= path[temp_index].distance && temp_index < path_dim) {
+                int k = temp_index;
+                while (path[k - 1].distance == -1) {
+                    k--;
+                }
+                path[k - 1].distance = -1;
+                temp_index++;
+            }
+            last_index = temp_index - 1;
+        } else {
+            last_index = i;
+        }
+    }
+
+
+
+
+
+    int last_index = path_dim - 1;
+        for (int i = path_dim - 2; i > 0; i--) {
+            printf("%d -> %d > %d\n", path[i - 1].distance, path[i - 1].distancePlusMax, path[last_index].distance);
+            if (path[i - 1].distancePlusMax > path[last_index].distance) {
+                last_index--;
+                continue;
+            }
+            int k = 0;
+            printf("%d <= %d\n", path[i - 1 - k].distancePlusMax, path[last_index].distance);
+            while (path[i - 1 - k].distancePlusMax <= path[last_index].distance) {
+                k++;
+                printf("%d <= %d\n", path[i - 1 - k].distancePlusMax, path[last_index].distance);
+            }
+            printf("%d\n", k);
+
+            // I'll remove k elements from the array, in particular every i - 2*t
+            for (int t = k - 1; t >= 0; t--) {
+                for (int j = i - 2 * t; j < path_dim - 1; j++) {
+                    path[j].distance = path[j + 1].distance;
+                    path[j].distancePlusMax = path[j + 1].distancePlusMax;
+                }
+                path_dim--;
+                for (int z = 0; z < path_dim; z++) {
+                    printf("%d ", path[z].distance);
+                }
+                printf("\n");
+            }
+        }
+
+
+
+
+
+
+
+        int last_index = path_dim - 1;
+            for (int i = path_dim - 2; i > 0; i--) {
+                if (path[i - 1].distancePlusMax > path[last_index].distance) { //
+                    last_index--;
+                    continue;
+                }
+
+                if (i == 1) {
+                    // I delete the i-element in path
+                    for (int j = i; j < path_dim - 1; j++) {
+                        path[j] = path[j + 1];
+                    }
+                    path_dim--;
+                    continue;
+                }
+
+                // If I get here, it means path[i - 1].distancePlusMax <= path[last_index].distance
+                if (path[i - 2].distancePlusMax > path[last_index].distance) {
+                    // I delete the i-element in path
+                    for (int j = i; j < path_dim - 1; j++) {
+                        path[j] = path[j + 1];
+                    }
+                    path_dim--;
+
+                    i++;
+                    continue;
+                }
+
+                if (path[i - 3].distancePlusMax > path[last_index].distance) {
+                    // I delete the i-element in path
+                    for (int j = i; j < path_dim - 1; j++) {
+                        path[j] = path[j + 1];
+                    }
+                    path_dim--;
+                    last_index--;
+
+                    // Check if I can delete the (i-2)-element in path too
+                    if (path[i - 3].distancePlusMax <= path[i - 1].distance) {
+                        for (int j = i - 2; j < path_dim - 1; j++) {
+                            path[j] = path[j + 1];
+                        }
+                        path_dim--;
+                    }
+                    continue;
+                }
+
+                if (path[i - 4].distancePlusMax > path[last_index].distance) {
+                    // I delete the i-element in path
+                    for (int j = i; j < path_dim - 1; j++) {
+                        path[j] = path[j + 1];
+                    }
+                    path_dim--;
+                    last_index--;
+
+                    if (path[i - 4].distancePlusMax <= path[i - 1].distance) {
+                        for (int j = i - 3; j < path_dim - 2; j++) {
+                            path[j] = path[j + 2];
+                        }
+                        path_dim-=2;
+                    } else if (path[i - 4].distancePlusMax <= path[i - 2].distance) {
+                        for (int j = i - 3; j < path_dim - 1; j++) {
+                            path[j] = path[j + 1];
+                        }
+                        path_dim--;
+                    }
+                }
+
+
+
+
+
+
+
+
+
+
+
+                dritto
+
+
+                int last_distance = path[path_dim - 1].distance;
+                    for (int i = path_dim - 2; i > 0; i--) {
+                        if (path[i - 1].distancePlusMax >= last_distance) {
+                            path[i].distance = -1;
+                        } else {
+                            last_distance = path[i].distance;
+                        }
+                    }
