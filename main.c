@@ -137,6 +137,26 @@ void addVehicle(Highway *highway, int distance, int vehicle) {
     printf("non aggiunta\n"); // station not found
 }
 
+int binarySearchMaxHeap(Vehicles *cars, int vehicle) {
+    int left = 0;
+    int right = cars->num_vehicles - 1;
+
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+
+        if (cars->autonomy[mid] == vehicle) {
+            return mid;
+        } else if (cars->autonomy[mid] < vehicle) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+
+    return -1;
+}
+
+
 void removeVehicle(Highway *highway, int distance, int vehicle) {
     for (int i = 0; i < highway->num_stations; i++) {
         if (highway->stations[i].distance == distance) {
@@ -146,6 +166,18 @@ void removeVehicle(Highway *highway, int distance, int vehicle) {
                 printf("non rottamata\n");
                 return;
             }
+
+            //int search_result = binarySearchMaxHeap(highway->stations[i].cars, vehicle);
+            //if (search_result != -1) {
+            //    highway->stations[i].cars->autonomy[search_result] = highway->stations[i].cars->autonomy[num_vehicles - 1];
+            //    highway->stations[i].cars->num_vehicles--;
+            //    maxHeapify(highway->stations[i].cars, search_result);
+            //    printf("rottamata\n");
+            //    return;
+            //} else {
+            //    printf("non rottamata\n"); // vehicle not found
+            //    return;
+            //}
 
             for (int j = 0; j < num_vehicles; j++) {
                 if (highway->stations[i].cars->autonomy[j] == vehicle) {
@@ -254,6 +286,14 @@ bool isPresent(StationForPath *path, int dim, int distance) {
     return false;
 }
 
+bool alreadyAdded(int *path, int dim, int distance) {
+    for (int i = 0; i < dim; i++) {
+        if (path[i] == distance)
+            return true;
+    }
+    return false;
+}
+
 void findShortestPath(Highway *highway, int start, int target) {
     Station starting_station;
     starting_station.distance = 0;
@@ -283,7 +323,6 @@ void findShortestPath(Highway *highway, int start, int target) {
 
     path[0].distance = start;
     path[0].distancePlusMax = start + starting_station.cars->autonomy[0];
-
 
     int last_no = start_index + 1;
     int old_last = last_no;
@@ -327,57 +366,39 @@ void findShortestPath(Highway *highway, int start, int target) {
     }
 
     int *true_path = (int *) malloc(sizeof(int) * (target_index - start_index + 1));
-    true_path[0] = path[0].distance;
     int true_dim = 1;
+    true_path[0] = path[path_dim - 1].distance;
 
-    int end_reached = 0;
-    for (int i = 0; i < path_dim; i++) {
-        int j = i + 1;
-        while (path[i].distancePlusMax >= path[j].distance && j < path_dim) {
-            if (path[j].distance == target) {
-                true_path[true_dim] = target;
-                true_dim++;
-                end_reached = 1;
-                break;
-            }
-            j++;
+    int last_dim = path_dim - 1;
+    int j = last_dim - 1;
+    while (j >= 0) {
+        int got_into_while = 0;
+        while (path[j].distancePlusMax >= path[last_dim].distance && j >= 0) {
+            got_into_while = 1;
+            j--;
         }
 
-        if (end_reached == 1) {
+        if (j < 0) {
+            true_path[true_dim] = path[0].distance;
+            true_dim++;
             break;
         }
 
-        int k = i + 1;
-        if (j - k == 1) {
-            // I only have one possible path, keep going
-            true_path[true_dim] = path[k].distance;
-            true_dim++;
-            continue;
-        }
-
-        while (path[k].distancePlusMax < path[j].distance && k < j) {
-            k++;
-        }
-
-        if (path[k].distancePlusMax >= path[j].distance) {
-            true_path[true_dim] = path[k].distance;
-            true_dim++;
-        } else {
-            printf("nessun percorso\n"); // shouldn't be possible, it's a precaution
-            return;
-        }
-
-        // now I want to move i to the k position, however with the for loop i is going to increase by one, so now
-        // I'll set it to k - 1
-        i = k - 1;
-    }
-
-    for (int i = 0; i < true_dim; i++) {
-        if (true_path[i]) {
-            printf("%d ", true_path[i]);
+        if (path[j].distancePlusMax < path[last_dim].distance) {
+            if (got_into_while == 1) {
+                // add the last >= (j + 1) to the true path
+                true_path[true_dim] = path[j + 1].distance;
+                true_dim++;
+                last_dim = j + 1;
+            } else
+                j--;
         }
     }
-    printf("\n");
+
+    for (int i = true_dim - 1; i > 0; i--) {
+        printf("%d ", true_path[i]);
+    }
+    printf("%d\n", true_path[0]);
 
     free(true_path);
     free(path);
@@ -500,12 +521,12 @@ void findShortestPathReverse(Highway *highway, int start, int target) {
         i = k - 1;
     }
 
-    for (int i = 0; i < true_dim; i++) {
+    for (int i = 0; i < true_dim - 1; i++) {
         if (true_path[i]) {
             printf("%d ", true_path[i]);
         }
     }
-    printf("\n");
+    printf("%d\n", true_path[true_dim]);
 
     free(true_path);
     free(path);
