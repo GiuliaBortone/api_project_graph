@@ -155,3 +155,29 @@ int last_index = path_dim - 1;
                             last_distance = path[i].distance;
                         }
                     }
+
+
+
+
+
+
+
+
+
+
+                    // region print
+                    void printHeap(Vehicles *v) {
+                        for (int i = 0; i < v->num_vehicles; i++) {
+                            printf("%d ", v->autonomy[i]);
+                        }
+                        printf("\n");
+                    }
+
+                    void printGraph(Highway *highway) {
+                        for (int i = 0; i < highway->num_stations; i++) {
+                            printf("Station: %d km, %d veicoli, veicoli: ", highway->stations[i].distance,
+                                   highway->stations[i].cars->num_vehicles);
+                            printHeap(highway->stations[i].cars);
+                        }
+                    }
+                    // endregion print

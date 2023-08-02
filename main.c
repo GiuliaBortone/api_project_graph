@@ -326,22 +326,12 @@ void findShortestPath(Highway *highway, int start, int target) {
         return;
     }
 
-
-    for (int i = 0; i < path_dim; i++) {
-        if (path[i].distance != -1) {
-            printf("%d: %d/%d ", i, path[i].distance, path[i].distancePlusMax);
-        }
-    } //todo
-    printf("\n"); // todo togli, è solo per la stampa
-
-
-    //todo algoritmo
     int *true_path = (int *) malloc(sizeof(int) * (target_index - start_index + 1));
     true_path[0] = path[0].distance;
     int true_dim = 1;
 
     int end_reached = 0;
-    for (int i = 0; i < path_dim && !end_reached; i++) {
+    for (int i = 0; i < path_dim; i++) {
         int j = i + 1;
         while (path[i].distancePlusMax >= path[j].distance && j < path_dim) {
             if (path[j].distance == target) {
@@ -381,13 +371,6 @@ void findShortestPath(Highway *highway, int start, int target) {
         // I'll set it to k - 1
         i = k - 1;
     }
-
-    //
-    //
-    //
-    //
-    //
-    //
 
     for (int i = 0; i < true_dim; i++) {
         if (true_path[i]) {
@@ -471,41 +454,64 @@ void findShortestPathReverse(Highway *highway, int start, int target) {
         return;
     }
 
+    int *true_path = (int *) malloc(sizeof(int) * (start_index - target_index + 1));
+    true_path[0] = path[0].distance;
+    int true_dim = 1;
 
-    // todo algoritmo
-
-
-
-
-
-
+    int end_reached = 0;
     for (int i = 0; i < path_dim; i++) {
-        printf("%d ", path[i].distance);
+        int j = i + 1;
+        while (path[i].distancePlusMax <= path[j].distance && j < path_dim) {
+            if (path[j].distance == target) {
+                true_path[true_dim] = target;
+                true_dim++;
+                end_reached = 1;
+                break;
+            }
+            j++;
+        }
+
+        if (end_reached == 1) {
+            break;
+        }
+
+        int k = j - 1;
+        if (k == i) {
+            // I only have one possible path, keep going
+            true_path[true_dim] = path[k].distance;
+            true_dim++;
+            continue;
+        }
+
+        while (path[k].distancePlusMax > path[j].distance && k > 0) {
+            k--;
+        }
+
+        if (path[k].distancePlusMax <= path[j].distance) {
+            true_path[true_dim] = path[k].distance;
+            true_dim++;
+        } else {
+            printf("nessun percorso\n"); // shouldn't be possible, it's a precaution
+            return;
+        }
+
+        // now I want to move i to the k position, however with the for loop i is going to increase by one, so now
+        // I'll set it to k - 1
+        i = k - 1;
+    }
+
+    for (int i = 0; i < true_dim; i++) {
+        if (true_path[i]) {
+            printf("%d ", true_path[i]);
+        }
     }
     printf("\n");
 
+    free(true_path);
     free(path);
 }
 
 // endregion find paths methods
-
-// region print
-void printHeap(Vehicles *v) {
-    for (int i = 0; i < v->num_vehicles; i++) {
-        printf("%d ", v->autonomy[i]);
-    }
-    printf("\n");
-}
-
-void printGraph(Highway *highway) {
-    for (int i = 0; i < highway->num_stations; i++) {
-        printf("Station: %d km, %d veicoli, veicoli: ", highway->stations[i].distance,
-               highway->stations[i].cars->num_vehicles);
-        printHeap(highway->stations[i].cars);
-    }
-}
-// endregion print
-
 
 int main() {
     Highway highway;
