@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <limits.h>
 //#include <stdbool.h>
 
 #define MAX_VEHICLES 512
@@ -18,7 +19,10 @@ typedef struct {
 
 typedef struct {
     int distance;
-    int distancePlusMax;
+    int reach;
+    int parent; // index of parent
+    int costToReach;
+    bool visited; // true for visited, false for not visited
 } StationForPath;
 
 typedef struct {
@@ -278,7 +282,7 @@ void orderStationsHeapSort(Highway *highway) {
 
 }
 
-bool isPresent(StationForPath *path, int dim, int distance) {
+bool isPresent(StationForPath path[], int dim, int distance) {
     for (int i = 0; i < dim; i++) {
         if (path[i].distance == distance)
             return true;
@@ -286,7 +290,7 @@ bool isPresent(StationForPath *path, int dim, int distance) {
     return false;
 }
 
-void findShortestPath(Highway *highway, int start, int target) {
+void findShortestPathForward(Highway *highway, int start, int target) {
     Station starting_station;
     starting_station.distance = 0;
     starting_station.cars = NULL;
@@ -310,11 +314,14 @@ void findShortestPath(Highway *highway, int start, int target) {
     }
 
     // Initialize path
-    StationForPath *path = (StationForPath *) malloc(sizeof(StationForPath) * (target_index - start_index + 1));
+    StationForPath path[target_index - start_index + 1];
     int path_dim = 1;
 
     path[0].distance = start;
-    path[0].distancePlusMax = start + starting_station.cars->autonomy[0];
+    path[0].reach = start + starting_station.cars->autonomy[0];
+    path[0].parent = -1;
+    path[0].costToReach = 0;
+    path[0].visited = false;
 
     int last_no = start_index + 1;
     int old_last = last_no;
@@ -334,9 +341,12 @@ void findShortestPath(Highway *highway, int start, int target) {
                 int max = current_distance + highway->stations[j].cars->autonomy[0];
 
                 path[path_dim].distance = current_distance;
-                path[path_dim].distancePlusMax = max;
-                path_dim++;
+                path[path_dim].reach = max;
+                path[path_dim].parent = -1;
+                path[path_dim].costToReach = INT_MAX;
+                path[path_dim].visited = false;
 
+                path_dim++;
 
                 if (highway->stations[j].distance == target) {
                     found_target = 1;
@@ -357,46 +367,45 @@ void findShortestPath(Highway *highway, int start, int target) {
         return;
     }
 
-    int *true_path = (int *) malloc(sizeof(int) * (target_index - start_index + 1));
-    int true_dim = 1;
-    true_path[0] = path[path_dim - 1].distance;
-
-    int last_dim = path_dim - 1;
-    int j = last_dim - 1;
-    while (j >= 0) {
-        int got_into_while = 0;
-        while (path[j].distancePlusMax >= path[last_dim].distance && j >= 0) {
-            got_into_while = 1;
-            j--;
-        }
-
-        if (j < 0) {
-            true_path[true_dim] = path[0].distance;
-            true_dim++;
-            break;
-        }
-
-        if (path[j].distancePlusMax < path[last_dim].distance) {
-            if (got_into_while == 1) {
-                // add the last >= (j + 1) to the true path
-                true_path[true_dim] = path[j + 1].distance;
-                true_dim++;
-                last_dim = j + 1;
+    for (int i = 0; i < path_dim - 1; i++) {
+        for (int j = i + 1; j < path_dim; j++) {
+            if (path[i].reach >= path[j].distance) {
+                if (!path[j].visited) {
+                    path[j].parent = i;
+                    path[j].costToReach = path[i].costToReach + 1;
+                    path[j].visited = true;
+                } else {
+                    if (path[i].costToReach + 1 < path[j].costToReach) {
+                        path[j].parent = i;
+                        path[j].costToReach = path[i].costToReach + 1;
+                    }
+                }
             } else
-                j--;
+                break;
         }
     }
 
-    for (int i = true_dim - 1; i > 0; i--) {
-        printf("%d ", true_path[i]);
+    int *true_path = (int *) malloc(sizeof(int) * path_dim);
+    int true_dim = 1;
+    true_path[0] = path[path_dim - 1].distance;
+
+    int i = path[path_dim - 1].parent;
+    while (i >= 0) {
+        true_path[true_dim] = path[i].distance;
+        true_dim++;
+
+        i = path[i].parent;
+    }
+
+    for (int j = true_dim - 1; j > 0; j--) {
+        printf("%d ", true_path[j]);
     }
     printf("%d\n", true_path[0]);
 
     free(true_path);
-    free(path);
 }
 
-void findShortestPathReverse(Highway *highway, int start, int target) {
+void findShortestPathBackward(Highway *highway, int start, int target) {
     Station starting_station;
     starting_station.distance = 0;
     starting_station.cars = NULL;
@@ -420,12 +429,14 @@ void findShortestPathReverse(Highway *highway, int start, int target) {
     }
 
     // Initialize path
-    StationForPath *path = (StationForPath *) malloc(sizeof(StationForPath) * (start_index - target_index + 1));
+    StationForPath path[start_index - target_index + 1];
     int path_dim = 1;
 
     path[0].distance = start;
-    path[0].distancePlusMax = start - starting_station.cars->autonomy[0];
-
+    path[0].reach = start - starting_station.cars->autonomy[0];
+    path[0].parent = -1;
+    path[0].costToReach = 0;
+    path[0].visited = false;
 
     int last_no = start_index - 1;
     int old_last = last_no;
@@ -445,7 +456,11 @@ void findShortestPathReverse(Highway *highway, int start, int target) {
                 int max = current_distance - highway->stations[j].cars->autonomy[0];
 
                 path[path_dim].distance = current_distance;
-                path[path_dim].distancePlusMax = max;
+                path[path_dim].reach = max;
+                path[path_dim].parent = -1;
+                path[path_dim].costToReach = INT_MAX;
+                path[path_dim].visited = false;
+
                 path_dim++;
 
                 if (highway->stations[j].distance == target) {
@@ -467,44 +482,44 @@ void findShortestPathReverse(Highway *highway, int start, int target) {
         return;
     }
 
-    int *true_path = (int *) malloc(sizeof(int) * (start_index - target_index + 1));
-    true_path[0] = path[0].distance;
-    int true_dim = 1;
-
-    int last_dim = 0;
-    int j = last_dim + 1;
-    while (j < path_dim) {
-        int got_into_while = 0;
-        while (path[last_dim].distancePlusMax <= path[j].distance && j < path_dim) {
-            got_into_while = 1;
-            j++;
-        }
-
-        if (j >= path_dim) {
-            true_path[true_dim] = path[path_dim - 1].distance;
-            true_dim++;
-            break;
-        }
-
-        if (path[last_dim].distancePlusMax > path[j].distance) {
-            if (got_into_while == 1) {
-                // add the last >= (j + 1) to the true path
-                true_path[true_dim] = path[j - 1].distance;
-                true_dim++;
-                last_dim = j - 1;
+    for (int i = 0; i < path_dim - 1; i++) {
+        for (int j = i + 1; j < path_dim; j++) {
+            if (path[i].reach <= path[j].distance) {
+                if (!path[j].visited) {
+                    path[j].parent = i;
+                    path[j].costToReach = path[i].costToReach + 1;
+                    path[j].visited = true;
+                } else {
+                    if (path[i].costToReach + 1 <= path[j].costToReach) {
+                        path[j].parent = i;
+                        path[j].costToReach = path[i].costToReach + 1;
+                    }
+                }
             } else
-                j++;
+                break;
         }
     }
 
-    for (int i = 0; i < true_dim - 1; i++) {
-        printf("%d ", true_path[i]);
+    int *true_path = (int *) malloc(sizeof(int) * path_dim);
+    int true_dim = 1;
+    true_path[0] = path[path_dim - 1].distance;
+
+    int i = path[path_dim - 1].parent;
+    while (i >= 0) {
+        true_path[true_dim] = path[i].distance;
+        true_dim++;
+
+        i = path[i].parent;
     }
-    printf("%d\n", true_path[true_dim - 1]);
+
+    for (int j = true_dim - 1; j > 0; j--) {
+        printf("%d ", true_path[j]);
+    }
+    printf("%d\n", true_path[0]);
 
     free(true_path);
-    free(path);
 }
+
 
 // endregion find paths methods
 
@@ -550,9 +565,9 @@ int main() {
             orderStationsHeapSort(&highway);
 
             if (start_station < target_station) {
-                findShortestPath(&highway, start_station, target_station);
+                findShortestPathForward(&highway, start_station, target_station);
             } else if (start_station > target_station) {
-                findShortestPathReverse(&highway, start_station, target_station);
+                findShortestPathBackward(&highway, start_station, target_station);
             } else
                 printf("%d\n", start_station);
         }
