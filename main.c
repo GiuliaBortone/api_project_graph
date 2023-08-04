@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
-//#include <stdbool.h>
 
 #define MAX_VEHICLES 512
 
@@ -121,8 +120,9 @@ Vehicles *createHeap(int num_vehicles, int *cars) {
 }
 
 void addVehicle(Highway *highway, int distance, int vehicle) {
-    for (int i = 0; i < highway->num_stations; i++) {
+    for (int i = highway->num_stations - 1; i >= 0; i--) {
         if (highway->stations[i].distance == distance) {
+
             int num_vehicles = highway->stations[i].cars->num_vehicles;
 
             if (num_vehicles < MAX_VEHICLES) {
@@ -141,26 +141,6 @@ void addVehicle(Highway *highway, int distance, int vehicle) {
     printf("non aggiunta\n"); // station not found
 }
 
-int binarySearchMaxHeap(Vehicles *cars, int vehicle) {
-    int left = 0;
-    int right = cars->num_vehicles - 1;
-
-    while (left <= right) {
-        int mid = left + (right - left) / 2;
-
-        if (cars->autonomy[mid] == vehicle) {
-            return mid;
-        } else if (cars->autonomy[mid] < vehicle) {
-            right = mid - 1;
-        } else {
-            left = mid + 1;
-        }
-    }
-
-    return -1;
-}
-
-
 void removeVehicle(Highway *highway, int distance, int vehicle) {
     for (int i = 0; i < highway->num_stations; i++) {
         if (highway->stations[i].distance == distance) {
@@ -171,23 +151,14 @@ void removeVehicle(Highway *highway, int distance, int vehicle) {
                 return;
             }
 
-            //int search_result = binarySearchMaxHeap(highway->stations[i].cars, vehicle);
-            //if (search_result != -1) {
-            //    highway->stations[i].cars->autonomy[search_result] = highway->stations[i].cars->autonomy[num_vehicles - 1];
-            //    highway->stations[i].cars->num_vehicles--;
-            //    maxHeapify(highway->stations[i].cars, search_result);
-            //    printf("rottamata\n");
-            //    return;
-            //} else {
-            //    printf("non rottamata\n"); // vehicle not found
-            //    return;
-            //}
-
             for (int j = 0; j < num_vehicles; j++) {
                 if (highway->stations[i].cars->autonomy[j] == vehicle) {
                     highway->stations[i].cars->autonomy[j] = highway->stations[i].cars->autonomy[num_vehicles - 1];
                     highway->stations[i].cars->num_vehicles--;
-                    maxHeapify(highway->stations[i].cars, j);
+                    if (highway->stations[i].cars->num_vehicles == 0) {
+                        highway->stations[i].cars->autonomy[0] = 0;
+                    } else
+                        maxHeapify(highway->stations[i].cars, j);
                     printf("rottamata\n");
                     return;
                 }
@@ -279,7 +250,6 @@ void orderStationsHeapSort(Highway *highway) {
         swap(&highway->stations[0], &highway->stations[i]);
         heapify(highway, i, 0);
     }
-
 }
 
 bool isPresent(StationForPath path[], int dim, int distance) {
