@@ -1,4 +1,5 @@
 Algorithms project 2022/23
+
 Grade: 30 cum laude/30
 
 The specifications in Italian for the project are in the documentation folder.
