@@ -199,40 +199,32 @@ void removeVehicle(Highway *highway, int distance, int vehicle) {
 
 // region graph methods
 void addStation(Highway *highway, int distance, int num_vehicles, int *cars) {
-    int last_min_index = highway->num_stations - 1;
-    // check if a station already exists at the given distance
-    for (int i = 0; i < highway->num_stations; i++) {
-        if (highway->stations[i].distance == distance) {
+    int left = 0;
+    int right = highway->num_stations - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+
+        if (highway->stations[mid].distance == distance) {
             printf("non aggiunta\n");
             return;
-        }
-
-        if (distance < highway->stations[i].distance) {
-            last_min_index = i - 1;
-            break;
-        }
-    }
-
-    highway->num_stations++;
-    highway->stations = (Station *) realloc(highway->stations, highway->num_stations * sizeof(Station));
-    if (last_min_index == highway->num_stations - 2) {
-        highway->stations[highway->num_stations - 1].distance = distance;
-        highway->stations[highway->num_stations - 1].cars = createHeap(num_vehicles, cars);
-        printf("aggiunta\n");
-        return;
-    }
-
-    for (int i = highway->num_stations - 1; i >= 0; i--) {
-        if (i - 1 != last_min_index) {
-            highway->stations[i].distance = highway->stations[i - 1].distance;
-            highway->stations[i].cars = highway->stations[i - 1].cars;
+        } else if (highway->stations[mid].distance < distance) {
+            left = mid + 1;
         } else {
-            highway->stations[i].distance = distance;
-            highway->stations[i].cars = createHeap(num_vehicles, cars);
-            printf("aggiunta\n");
-            return;
+            right = mid - 1;
         }
     }
+
+    highway->stations = (Station *) realloc(highway->stations, (highway->num_stations + 1) * sizeof(Station));
+
+    for (int i = highway->num_stations - 1; i >= left; i--) {
+        highway->stations[i + 1] = highway->stations[i];
+    }
+
+    highway->stations[left].distance = distance;
+    highway->stations[left].cars = createHeap(num_vehicles, cars);
+    highway->num_stations++;
+    printf("aggiunta\n");
+
 }
 
 void removeStation(Highway *highway, int distance) {
@@ -270,28 +262,22 @@ void removeStation(Highway *highway, int distance) {
 // endregion graph methods
 
 // region find path methods
-bool isPresent(StationForPath path[], int dim, int distance) {
-    for (int i = 0; i < dim; i++) {
-        if (path[i].distance == distance)
-            return true;
-    }
-    return false;
-}
-
 void findShortestPathForward(Highway *highway, int start, int target) {
-    int low = 0, high = highway->num_stations - 1;
-    int start_index = -1;
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
+    int start_index = -1, target_index = -1;
 
-        if (highway->stations[mid].distance == start) {
-            start_index = mid;
-            break;
-        } else if (highway->stations[mid].distance < start) {
-            low = mid + 1;
-        } else {
-            high = mid - 1;
+    // Search for start and target stations
+    for (int i = 0; i < highway->num_stations && (start_index == -1 || target_index == -1); i++) {
+        if (highway->stations[i].distance == start) {
+            start_index = i;
+        } else if (highway->stations[i].distance == target) {
+            target_index = i;
         }
+    }
+
+    // Check if stations where found
+    if (start_index == -1 || target_index == -1) {
+        printf("nessun percorso\n"); // start and target stations not found
+        return;
     }
 
     // Initialize path
@@ -304,48 +290,14 @@ void findShortestPathForward(Highway *highway, int start, int target) {
     path[0].costToReach = 0;
     path[0].visited = false;
 
-    int last_no = start_index + 1;
-    int old_last = last_no;
-    int found_target = 0;
-    for (int i = start_index; i < highway->num_stations && !found_target; i++) {
-        int reach = highway->stations[i].distance + highway->stations[i].cars->autonomy[0];
+    for (int i = start_index + 1; i <= target_index; i++) {
+        path[path_dim].distance = highway->stations[i].distance;
+        path[path_dim].reach = highway->stations[i].distance + highway->stations[i].cars->autonomy[0];
+        path[path_dim].parent = -1;
+        path[path_dim].costToReach = INT_MAX;
+        path[path_dim].visited = false;
 
-        if (!isPresent(path, path_dim, highway->stations[i].distance)) {
-            printf("nessun percorso\n"); // couldn't reach target
-            return;
-        }
-
-        for (int j = last_no; j < highway->num_stations && !found_target; j++) {
-            int current_distance = highway->stations[j].distance;
-
-            if (reach >= current_distance) {
-                int max = current_distance + highway->stations[j].cars->autonomy[0];
-
-                path[path_dim].distance = current_distance;
-                path[path_dim].reach = max;
-                path[path_dim].parent = -1;
-                path[path_dim].costToReach = INT_MAX;
-                path[path_dim].visited = false;
-
-                path_dim++;
-
-                if (highway->stations[j].distance == target) {
-                    found_target = 1;
-                }
-            } else {
-                last_no = j;
-                break;
-            }
-        }
-
-        if (old_last == last_no) {
-            break;
-        }
-    }
-
-    if (found_target == 0) {
-        printf("nessun percorso\n"); // couldn't reach the target station
-        return;
+        path_dim++;
     }
 
     for (int i = 0; i < path_dim - 1; i++) {
@@ -366,6 +318,11 @@ void findShortestPathForward(Highway *highway, int start, int target) {
         }
     }
 
+    if (path[path_dim - 1].visited == false) {
+        printf("nessun percorso\n");
+        return;
+    }
+
     int *true_path = (int *) malloc(sizeof(int) * path_dim);
     int true_dim = 1;
     true_path[0] = path[path_dim - 1].distance;
@@ -378,6 +335,11 @@ void findShortestPathForward(Highway *highway, int start, int target) {
         i = path[i].parent;
     }
 
+    if (true_path[true_dim - 1] != start) {
+        printf("nessun percorso\n");
+        return;
+    }
+
     for (int j = true_dim - 1; j > 0; j--) {
         printf("%d ", true_path[j]);
     }
@@ -387,16 +349,11 @@ void findShortestPathForward(Highway *highway, int start, int target) {
 }
 
 void findShortestPathBackward(Highway *highway, int start, int target) {
-    Station starting_station;
-    starting_station.distance = 0;
-    starting_station.cars = NULL;
-
     int start_index = -1, target_index = -1;
 
     // Search for start and target stations
     for (int i = 0; i < highway->num_stations && (start_index == -1 || target_index == -1); i++) {
         if (highway->stations[i].distance == start) {
-            starting_station = highway->stations[i];
             start_index = i;
         } else if (highway->stations[i].distance == target) {
             target_index = i;
@@ -414,53 +371,18 @@ void findShortestPathBackward(Highway *highway, int start, int target) {
     int path_dim = 1;
 
     path[0].distance = start;
-    path[0].reach = start - starting_station.cars->autonomy[0];
+    path[0].reach = start - highway->stations[start_index].cars->autonomy[0];
     path[0].parent = -1;
     path[0].costToReach = 0;
     path[0].visited = false;
 
-    int last_no = start_index - 1;
-    int old_last = last_no;
-    int found_target = 0;
-    for (int i = start_index; i >= 0 && !found_target; i--) {
-        int reach = highway->stations[i].distance - highway->stations[i].cars->autonomy[0];
-
-        if (!isPresent(path, path_dim, highway->stations[i].distance)) {
-            printf("nessun percorso\n"); // couldn't reach target
-            return;
-        }
-
-        for (int j = last_no; j >= 0 && !found_target; j--) {
-            int current_distance = highway->stations[j].distance;
-
-            if (reach <= current_distance) {
-                int max = current_distance - highway->stations[j].cars->autonomy[0];
-
-                path[path_dim].distance = current_distance;
-                path[path_dim].reach = max;
-                path[path_dim].parent = -1;
-                path[path_dim].costToReach = INT_MAX;
-                path[path_dim].visited = false;
-
-                path_dim++;
-
-                if (highway->stations[j].distance == target) {
-                    found_target = 1;
-                }
-            } else {
-                last_no = j;
-                break;
-            }
-        }
-
-        if (old_last == last_no) {
-            break;
-        }
-    }
-
-    if (found_target == 0) {
-        printf("nessun percorso\n"); // couldn't reach the target station
-        return;
+    for (int i = start_index - 1; i >= target_index; i--) {
+        path[path_dim].distance = highway->stations[i].distance;
+        path[path_dim].reach = highway->stations[i].distance - highway->stations[i].cars->autonomy[0];
+        path[path_dim].parent = -1;
+        path[path_dim].costToReach = INT_MAX;
+        path[path_dim].visited = false;
+        path_dim++;
     }
 
     for (int i = 0; i < path_dim - 1; i++) {
@@ -481,6 +403,11 @@ void findShortestPathBackward(Highway *highway, int start, int target) {
         }
     }
 
+    if (path[path_dim - 1].visited == false) {
+        printf("nessun percorso\n");
+        return;
+    }
+
     int *true_path = (int *) malloc(sizeof(int) * path_dim);
     int true_dim = 1;
     true_path[0] = path[path_dim - 1].distance;
@@ -491,6 +418,11 @@ void findShortestPathBackward(Highway *highway, int start, int target) {
         true_dim++;
 
         i = path[i].parent;
+    }
+
+    if (true_path[true_dim - 1] != start) {
+        printf("nessun percorso\n");
+        return;
     }
 
     for (int j = true_dim - 1; j > 0; j--) {
@@ -522,6 +454,7 @@ int main() {
                     return 1;
                 }
             }
+
             addStation(&highway, distance, num_vehicles, vehicles);
         } else if (strcmp(command, "demolisci-stazione") == 0) {
             if (scanf("%d", &distance) != 1) {
@@ -537,7 +470,6 @@ int main() {
             if (scanf("%d %d", &distance, &autonomy) != 2) {
                 return 1;
             }
-
             removeVehicle(&highway, distance, autonomy);
         } else if (strcmp(command, "pianifica-percorso") == 0) {
             if (scanf("%d %d", &start_station, &target_station) != 2) {
